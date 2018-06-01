@@ -9,20 +9,6 @@ namespace PathFinder
     class Program
     {
         static void Main(string[] args) {
-            //int[] array = new int[10] { 2, 3, 6, 1, 9, 4, 0, 8, 7, 5 };
-            //for(int i = 0; i < array.Length; i++) {
-            //    for(int ii = i + 1; ii < array.Length; ii++) {
-            //        if(array[i] > array[ii]) {
-            //            int tmp = array[i];
-            //            array[i] = array[ii];
-            //            array[ii] = tmp;
-            //        }
-            //        string str = string.Format("{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}", array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8], array[9]);
-            //        Console.WriteLine(str);
-            //        Thread.Sleep(500);
-            //    }
-            //}
-
             PathFinder p = new PathFinder();
             p.PrintMatrix();
             p.FindPath();
@@ -34,29 +20,29 @@ namespace PathFinder
     {
         char[,] matrix = new char[8, 8]
         {
-            {'0','0','0','0','0','0','0','0'},
-            {'0','0','x','x','x','x','0','0'},
             {'0','0','0','0','0','x','0','0'},
-            {'0','0','0','0','0','x','0','x'},
+            {'x','x','x','x','0','x','0','0'},
             {'0','0','0','0','0','x','0','0'},
-            {'0','0','x','x','x','x','0','0'},
+            {'0','0','0','x','x','x','0','0'},
+            {'0','0','0','0','0','x','0','0'},
+            {'0','0','0','0','0','x','0','0'},
             {'0','0','0','0','0','0','0','0'},
             {'0','0','0','0','0','0','0','0'}
         };
-        PathNode startPoint = new PathNode(3, 0);
-        PathNode endPoint = new PathNode(6, 6);
+        PathNode startPoint = new PathNode(0, 0);
+        PathNode endPoint = new PathNode(4, 7);
         List<PathNode> openList = new List<PathNode>();
         List<PathNode> closeList = new List<PathNode>();
-        PathNode[] dir = new PathNode[4]
+        PathNode[] dir = new PathNode[8]
         {
             new PathNode(-1,0),
-            //new P(-1, 1),
+            new PathNode(-1, 1),
             new PathNode(0,1),
-            //new P(1,1),
+            new PathNode(1,1),
             new PathNode(1,0),
-            //new P(1,-1),
+            new PathNode(1,-1),
             new PathNode(0, -1),
-            //new P(-1,-1)
+            new PathNode(-1,-1)
         };
 
         public void FindPath() {
@@ -66,24 +52,49 @@ namespace PathFinder
             matrix[endPoint.x, endPoint.y] = 'e';
             openList.Add(startPoint);
             while(openList.Count > 0) {
+                SortUp(ref openList);
                 var checkingPoint = openList[0];
                 openList.Remove(checkingPoint);
                 closeList.Add(checkingPoint);
                 for(int i = 0; i < dir.Length; i++) {
                     var tmpPoint = checkingPoint + dir[i];
-                    if(!closeList.Contains(tmpPoint) && matrix[tmpPoint.x, tmpPoint.y] != 'x') {
-                        if(openList.Contains(tmpPoint)) {
-
+                    //出界
+                    if(tmpPoint.x < 0 || tmpPoint.x > matrix.GetUpperBound(0) || tmpPoint.y < 0 || tmpPoint.y > matrix.GetUpperBound(1)) {
+                        continue;
+                    }
+                    //已经在关闭列表或者是障碍物
+                    if(closeList.Contains(tmpPoint) || matrix[tmpPoint.x, tmpPoint.y] == 'x') {
+                        continue;
+                    }
+                    //是终点
+                    if(tmpPoint.x == endPoint.x && tmpPoint.y == endPoint.y) {
+                        endPoint.parent = checkingPoint;
+                        openList.Add(endPoint);
+                        Console.WriteLine("Find Path");
+                        var parent = endPoint.parent;
+                        while(parent != null) {
+                            matrix[parent.x, parent.y] = 'p';
+                            parent = parent.parent;
                         }
-                        else {
-                            openList.Add(tmpPoint);
+                        PrintMatrix();
+                        return;
+                    }
+                    if(openList.Exists(x => x.x == tmpPoint.x && x.y == tmpPoint.y)) {
+                        var tmpG = ((Math.Abs(checkingPoint.x - tmpPoint.x) + Math.Abs(checkingPoint.y - tmpPoint.y)) == 2 ? 14 : 10) + (tmpPoint.parent == null ? 0 : tmpPoint.parent.G);
+                        if(tmpG < tmpPoint.G) {
                             tmpPoint.parent = checkingPoint;
-                            tmpPoint.G = 10;
-                            tmpPoint.H = tmpPoint.Distance(endPoint);
+                            tmpPoint.G = tmpG;
                         }
                     }
+                    else {
+                        openList.Add(tmpPoint);
+                        //matrix[tmpPoint.x, tmpPoint.y] = 'p';
+                        tmpPoint.parent = checkingPoint;
+                        tmpPoint.G = ((Math.Abs(checkingPoint.x - tmpPoint.x) + Math.Abs(checkingPoint.y - tmpPoint.y)) == 2 ? 14 : 10) + (tmpPoint.parent == null ? 0 : tmpPoint.parent.G);
+                        tmpPoint.H = (Math.Abs(tmpPoint.x - endPoint.x) + Math.Abs(tmpPoint.y - endPoint.y)) * 10;
+                    }
+
                 }
-                SortUp(ref openList);
             }
         }
 
@@ -143,22 +154,6 @@ namespace PathFinder
 
         public static PathNode operator +(PathNode _a, PathNode _b) {
             return new PathNode(_a.x + _b.x, _a.y + _b.y);
-        }
-
-        public static bool operator ==(PathNode _a, PathNode _b) {
-            return _a.x == _b.x && _a.y == _b.y;
-        }
-        public static bool operator !=(PathNode _a, PathNode _b) {
-            return _a.x != _b.x || _a.y != _b.y;
-        }
-        public override bool Equals(object obj) {
-            return base.Equals(obj);
-        }
-        public override int GetHashCode() {
-            return base.GetHashCode();
-        }
-        public double Distance(PathNode _a) {
-            return Math.Sqrt(Math.Pow(Math.Abs(_a.x - x), 2) + Math.Pow(Math.Abs(_a.y - y), 2));
         }
     }
 }
