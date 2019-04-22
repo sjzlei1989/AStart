@@ -35,14 +35,14 @@ namespace PathFinder
         List<PathNode> closeList = new List<PathNode>();
         PathNode[] dir = new PathNode[8]
         {
-            new PathNode(-1,0),
+            new PathNode(-1, 0),
             new PathNode(-1, 1),
-            new PathNode(0,1),
-            new PathNode(1,1),
-            new PathNode(1,0),
-            new PathNode(1,-1),
+            new PathNode(0, 1),
+            new PathNode(1, 1),
+            new PathNode(1, 0),
+            new PathNode(1, -1),
             new PathNode(0, -1),
-            new PathNode(-1,-1)
+            new PathNode(-1, -1)
         };
 
         public void FindPath() {
@@ -133,7 +133,9 @@ namespace PathFinder
     {
         public PathNode parent = null;
         public double F {
-            get { return G + H; }
+            get {
+                return G + H;
+            }
         }
 
         /// <summary>
